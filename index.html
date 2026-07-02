@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الأحاديث المختارة (المئتان)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; background-color: #f3f4f6; }
+        .hadith-text { font-family: 'Amiri', serif; color: #7f1d1d; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="quiz-container" class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center">
+            <h1 class="text-3xl font-bold text-red-900 mb-6">الافتبار الإلكتروني للأحاديث المختارة</h1>
+            <p class="text-gray-600 mb-8 text-lg">30 سؤالاً تفاعلياً من كلام النبي ﷺ. الدرجة النهائية من 60.</p>
+            <button onclick="startQuiz()" class="bg-red-800 text-white px-10 py-3 rounded-full text-xl font-bold hover:bg-red-900 transition shadow-lg">ابدأ الاختبار الآن</button>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="question-screen" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-red-800 font-bold" id="question-number">سؤال 1 من 30</span>
+                <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-bold" id="score-display">الدرجة الحالية: 0</span>
+            </div>
+            
+            <div class="mb-8">
+                <h2 id="question-text" class="text-2xl font-bold text-gray-800 mb-6 hadith-text leading-relaxed"></h2>
+                <div id="options-container" class="grid grid-cols-1 gap-4">
+                    <!-- Options will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center">
+            <h1 class="text-4xl font-bold text-red-900 mb-4">انتهى الاختبار</h1>
+            <div class="text-6xl font-black text-red-800 mb-6" id="final-score"></div>
+            <p class="text-xl text-gray-700 mb-8" id="result-comment"></p>
+            <button onclick="location.reload()" class="bg-gray-200 text-gray-800 px-8 py-2 rounded-full font-bold hover:bg-gray-300 transition">إعادة المحاولة</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { q: "قال ﷺ: «إن كذباً علي ليس ككذب على أحد، من كذب علي متعمداً فليتبوأ...»", options: ["مقعده من النار", "مكانه في الدنيا", "غضب الله", "خسرانه المبين"], correct: 0 },
+            { q: "عندما سأل الرجل عن الإسلام، قال ﷺ: «خمس صلوات في اليوم والليلة»، فقال الرجل: هل عليّ غيرها؟ قال ﷺ:", options: ["نعم، السنن والرواتب", "لا، إلا أن تطوع", "نعم، صلاة الوتر", "لا، صلاة الفريضة فقط"], correct: 1 },
+            { q: "قال ﷺ لمعاذ بن جبل: «اتق دعوة المظلوم، فإنها ليس بينها وبين الله...»", options: ["حائل", "مانع", "حجاب", "ستار"], correct: 2 },
+            { q: "قال ﷺ: «الإيمان بضع وستون شعبة، و... شعبة من الإيمان»", options: ["الصدق", "الحياء", "الأمانة", "الصبر"], correct: 1 },
+            { q: "سُئل النبي ﷺ: أي الإسلام أفضل؟ قال ﷺ:", options: ["من صلى وصام", "من أدى الزكاة", "من سلم المسلمون من لسانه ويده", "من جاهد في سبيل الله"], correct: 2 },
+            { q: "قال ﷺ: «من ادعى إلى غير أبيه وهو يعلم أنه غير أبيه فـ...»", options: ["النار مثواه", "فقد عصى الله", "فالجنة عليه حرام", "فليس منا"], correct: 2 },
+            { q: "قال ﷺ: «اجتنبوا السبع الموبقات»، وذكر منها:", options: ["الكذب والسرقة", "الغيبة والنميمة", "التولي يوم الزحف", "الظلم والعدوان"], correct: 2 },
+            { q: "قال ﷺ: «ليس منا من ضرب الخدود، وشق الجيوب، ودعا بـ...»", options: ["دعوى الجاهلية", "قول الزور", "الباطل", "دعاء السوء"], correct: 0 },
+            { q: "قال ﷺ مفسراً الظلم في الآية: «إنما هو الشرك، ألم تسمعوا ما قال لقمان لابنه وهو يعظه: يا بني لا تشرك بالله إن الشرك...»", options: ["إثم مبين", "ظلم عظيم", "خسران كبير", "فعل شنيع"], correct: 1 },
+            { q: "قال ﷺ: «من قتل دون ماله فهو...»", options: ["مؤمن", "صابر", "شهيد", "فائز"], correct: 2 },
+            { q: "قال ﷺ في خروج أهل الإيمان من النار: «أخرجوا من كان في قلبه مثقال حبة من خردل من...»", options: ["خير", "إيمان", "يقين", "إخلاص"], correct: 1 },
+            { q: "قال ﷺ: «لكل نبي دعوة، فأريد إن شاء الله أن أختبئ دعوتي... لأمتي يوم القيامة»", options: ["نجاة", "شفاعة", "رحمة", "عونا"], correct: 1 },
+            { q: "قال ﷺ: «من توضأ نحو وضوئي هذا ثم صلى ركعتين لا يحدث فيهما نفسه...»", options: ["دخل الجنة", "كتب من الصديقين", "غفر له ما تقدم من ذنبه", "استجاب الله دعاءه"], correct: 2 },
+            { q: "قال ﷺ: «لولا أن أشق على أمتي -أو على الناس- لأمرتهم بـ... مع كل صلاة»", options: ["الوضوء", "الطيب", "السواك", "التبكير"], correct: 2 },
+            { q: "قال ﷺ عن صاحبي القبرين: «أما أحدهما فكان لا يستبرئ من البول، وأما الآخر فكان يمشي بـ...»", options: ["الكذب", "النميمة", "الغيبة", "الزور"], correct: 1 },
+            { q: "كان النبي ﷺ إذا دخل الخلاء قال: «اللهم إني أعوذ بك من...»", options: ["الشيطان والشرك", "الخبث والخبائث", "الهم والحزن", "العجز والكسل"], correct: 1 },
+            { q: "قال ﷺ للرجل الذي لم يطمئن في صلاته: «ارجع فصلِ فإنك...»", options: ["لم تحسن", "لم تصب", "لم تصل", "لم تكمل"], correct: 2 },
+            { q: "قال ﷺ: «إذا جلس أحدكم في الصلاة فليقل: التحيات لله والصلوات والطيبات...» وعلل ذلك بأنه إذا قالها أصابت:", options: ["أهله وماله", "كل عبد صالح في السماء والأرض", "أبواب الجنة", "ملائكة الرحمن"], correct: 1 },
+            { q: "قال ﷺ: «إذا صلى أحدكم للناس فليخفف, فإن منهم...»", options: ["الضعيف والسقيم والكبير", "المشغول والمحتاج", "الصغير والفقير", "المسافر والمتعب"], correct: 0 },
+            { q: "قال ﷺ: «إني لأدخل في الصلاة وأنا أريد إطالتها فأسمع بكاء الصبي فأجوز في صلاتي مما أعلم من...»", options: ["حاجة أمه", "شدة وجد أمه", "ضيق صدره", "تعب المصلين"], correct: 1 },
+            { q: "قال ﷺ عن أول مسجد وضع في الأرض: «المسجد الحرام»، قيل ثم أي؟ قال: «المسجد الأقصى»، قيل كم كان بينهما؟ قال:", options: ["ألف عام", "مائة عام", "أربعون سنة", "سبعون سنة"], correct: 2 },
+            { q: "قال ﷺ: «أعطيت خمساً لم يعطهن أحد من الأنبياء قبلي»، وذكر منها:", options: ["نصرت بالرعب مسيرة شهر", "كثرة الأتباع", "المعجزات الظاهرة", "كلام الله كفاحاً"], correct: 0 },
+            { q: "قال ﷺ: «من بنى مسجداً يبتغي به وجه الله بنى الله له...»", options: ["قصراً في الجنة", "مثله في الجنة", "بيتاً في الفردوس", "ذخراً يوم القيامة"], correct: 1 },
+            { q: "قال ﷺ عن المعذبين في قبورهم: «صدقتا، إنهم يعذبون عذاباً تسمعه... كلها»", options: ["الملائكة", "البهائم", "الجن", "المخلوقات"], correct: 1 },
+            { q: "كان ﷺ يستعيذ في صلاته من «المأثم والمغرم»، فقيل له ما أكثر ما تستعيذ من المغرم؟ فقال ﷺ:", options: ["المغرم ذل بالنهار", "إن الرجل إذا غرم حدث فكذب ووعد فأخلف", "الدين يمنع دخول الجنة", "المغرم يورث الهم"], correct: 1 },
+            { q: "كان النبي ﷺ يقول في دبر كل صلاة مكتوبة: «لا إله إلا الله وحده لا شريك له... اللهم لا مانع لما أعطيت ولا معطي لما منعت ولا ينفع ذا... منك...»", options: ["المال / المال", "الحسب / الحسب", "الجد / الجد", "السلطان / Sultan"], correct: 2 },
+            { q: "قال ﷺ: «من أدرك... من الصلاة فقد أدرك الصلاة»", options: ["تكبيرة الإحرام", "ركعة", "التشهد الأول", "سجدة"], correct: 1 },
+            { q: "قال ﷺ: «اشتكت النار إلى ربها... فأذن لها بنفسين»، نفس في الشتاء ونفس في:", options: ["الخريف", "الربيع", "الصيف", "الآخرة"], correct: 2 },
+            { q: "قال ﷺ: «يتعاقبون فيكم ملائكة بالليل وملائكة بالنهار ويجتمعون في صلاة... وصلاة...»", options: ["الظهر / العصر", "الفجر / العصر", "المغرب / العشاء", "الفجر / العشاء"], correct: 1 },
+            { q: "شبه النبي ﷺ الصلوات الخمس بنهر يغتسل فيه المرء كل يوم خمساً، فهل يبقى من درنه شيء؟ قال ﷺ:", options: ["يبقى الشيء اليسير", "فذلك مثل الصلوات الخمس يمحو الله به الخطايا", "ذلك لمن أخلص", "هذا فضل الله الواسع"], correct: 1 }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('question-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('question-number').innerText = `سؤال ${currentQuestion + 1} من 30`;
+            document.getElementById('question-text').innerText = q.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-right p-4 rounded-xl border-2 border-gray-100 hover:border-red-500 hover:bg-red-50 transition font-bold text-gray-700 text-lg";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected) {
+            if (selected === questions[currentQuestion].correct) {
+                score += 2;
+            }
+            
+            currentQuestion++;
+            document.getElementById('score-display').innerText = `الدرجة الحالية: ${score}`;
+            
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('question-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            const finalScoreElement = document.getElementById('final-score');
+            finalScoreElement.innerText = `${score} / 60`;
+            
+            let comment = "";
+            if (score >= 50) comment = "ممتاز جداً! بارك الله فيك ونفع بك الحفظ والاتقان.";
+            else if (score >= 40) comment = "أحسنت! نتيجة متميزة وقريبة من الإتقان.";
+            else if (score >= 30) comment = "جيد، ولكن يمكنك مراجعة متون الأحاديث بتركيز أكبر.";
+            else comment = "تحتاج إلى مراجعة ملف الأحاديث وإعادة الاختبار بتركيز.";
+            
+            document.getElementById('result-comment').innerText = comment;
+        }
+    </script>
+</body>
+</html>
